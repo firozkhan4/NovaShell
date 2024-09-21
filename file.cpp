@@ -1,82 +1,97 @@
 #include "file.h"
 
 FileSystem::FileSystem(const string& dirname) {
-  root = new Node();
+  root.reset(new Node());
   root->name = dirname;
   root->isdir = true;
   root->child = {};
-  pwd = getenv("HOME") + dirname;
+  pwd = getenv("HOME");
+  pwd += ("/NovaShell" + dirname);
   root->address = pwd;
-  file_stack.push(root);
+  root->parent = nullptr;
+  curr_node = root;
 }
 
-void FileSystem::touch(const string& filename) {
-  Node *p = file_stack.top();
-  string address;
+FileSystem::~FileSystem(){
+  deleteNode(root);
+  curr_node.reset();
+  root.reset();
 
-  if(p->name == "/"){
-    address = p->address + filename;
-  }else{
-    address = p->address + "/" + filename;
+}
+
+void FileSystem::touch(const vector<string>& args) {
+  string address = curr_node->address;
+
+  if(curr_node->name != "/"){
+    address = curr_node->address + "/";
   }
+  for(uint64_t i = 1; i < args.size(); i++){
+    
+    string curr_add = address + args[i];
 
-  ofstream file(address);
+    ofstream file(curr_add);
 
-  if(!file){
-    cerr << "Error creating file: " << strerror(errno) << endl;
+    if(!file){
+      cerr << "Error creating file: " << strerror(errno) << endl;
       return;
-  }
-  file.close();
-
-  Node *f = new Node();
-  f->name = filename;
-  f->isdir = false;
-  f->address = address;
-  p->child.push_back(f);
-}
-
-
-void FileSystem::mk_dir(const string& dirname) {
-    Node *p = file_stack.top();
-
-    Node *d = new Node();
-    d->name = dirname;
-    d->isdir = true;
-  if(p->name == "/"){
-    d->address = p->address + dirname;
-  }else{
-    d->address = p->address + "/" + dirname;
-  }
-  p->child.push_back(d);
-
-
-  if (mkdir(d->address.c_str(), 0755) == -1) {
-    cerr << "Error creating directory: " << strerror(errno) << endl;
-  }
-}
-
-
-void FileSystem::ls() {
-    Node *p = file_stack.top();
-    for (auto &i : p->child) {
-        cout << i->name << "\t";
     }
-    cout << endl;
+    file.close();
+
+    shared_ptr<Node> f(new Node());
+    f->name = args[i];
+    f->isdir = false;
+    f->address = curr_add;
+    f->parent = curr_node;
+    curr_node->child.push_back(move(f));
+
+  }
+}
+
+
+void FileSystem::mk_dir(const vector<string>& args) {
+
+  string address = curr_node->address;
+  
+  if(curr_node->name != "/"){
+    address = curr_node->address + "/";
+  }
+  for(uint64_t i = 1; i < args.size(); i++){
+    
+    string curr_add = address + args[i];
+  
+    if (mkdir(curr_add.c_str(), 0755) == -1) {
+      cerr << "Error creating directory: " << strerror(errno) << endl;
+      return;
+    }
+    shared_ptr<Node> d(new Node());
+    d->name = args[i];
+    d->isdir = true;
+    d->parent = curr_node;
+
+    curr_node->child.push_back(move(d));
+  }
+}
+
+
+string FileSystem::ls() {
+  string list;
+  for (auto &i : curr_node->child) {
+    list += (i->name + "\t");
+  }
+  return list;
 }
 
 
 void FileSystem::cd(const string& dirname) {
   if(dirname == ".."){
-    if(file_stack.size() > 1) {
-      file_stack.pop();
-      pwd = file_stack.top()->address;
+    if(curr_node->name != "/") {
+      curr_node = curr_node->parent;
     }
   }else{
 
-    Node *p = file_stack.top();
-    for(auto &i : p->child){
+    for(auto &i : curr_node->child){
       if(i->name == dirname && i->isdir){
-        file_stack.push(i);
+        curr_node = i;
         pwd = i->address;
         return;
       }
@@ -88,4 +103,13 @@ void FileSystem::cd(const string& dirname) {
 
 void FileSystem::getpwd() {
   cout << pwd << endl;
+}
+
+
+void FileSystem::deleteNode(shared_ptr<Node>& node) {
+    for (auto& child : node->child) {
+        deleteNode(child);
+    }
+  node->parent.reset();
+  node.reset();
 }

@@ -5,36 +5,41 @@
 #include <fstream>
 #include <cstring>
 #include <errno.h>
-
+#include <memory>
 
 
 using namespace std;
 
 struct Node {
-    string name;
-    bool isdir;
-    string address;
-    vector<Node*> child;
+  string name;
+  bool isdir;
+  string address;
+  vector<shared_ptr<Node>> child;
+  shared_ptr<Node> parent;
 };
 
 class FileSystem {
 private:
-    Node *root;
-    string pwd;
-    stack<Node*> file_stack;
+  shared_ptr<Node> root;
+  shared_ptr<Node> curr_node;
+  string pwd;
 
 public:
-    FileSystem(const string &dirname);
+  FileSystem(const string &dirname);
 
-    void touch(const string &filename);
+  ~FileSystem();
 
-    void mk_dir(const string &dirname);
+  void touch(const vector<string> &args);
 
-    void ls();
+  void mk_dir(const vector<string> &args);
 
-    void cd(const string &add);
+  string ls();
 
-    void getpwd();
+  void cd(const string &add);
+
+  void getpwd();
+
+  void deleteNode(shared_ptr<Node> &node);
 };
 
 

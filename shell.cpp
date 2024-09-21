@@ -1,5 +1,6 @@
 #include "shell.h"
 #include "file.h"
+#include <thread>
 
 FileSystem fs("/");
 
@@ -36,16 +37,25 @@ void run_input(const vector<string>& arg) {
 
   }else if(arg[0] == "mkdir"){
 
-    fs.mk_dir(arg[1]);
+    fs.mk_dir(arg);
 
   }else if(arg[0] == "ls"){
-    fs.ls();
+
+    string list = fs.ls();
+    std::cout << list << endl;
+
   }else if(arg[0] == "touch"){
-    fs.touch(arg[1]);
+
+    fs.touch(arg);
+
   }else if(arg[0] == "pwd"){
+    
     fs.getpwd();
+
   }else if(arg[0] == "cd"){
+    
     fs.cd(arg[1]);
+
   }else
   {
 
@@ -69,16 +79,10 @@ void init(const string user){
  
     if(tokens[0] == "exit") return;
 
-    pid_t pid = fork();
+    thread t(run_input,tokens);
 
-    if(pid == 0){
-      run_input(tokens);
-      exit(0);
-    }else if(pid < 0){
-      cerr << "Execution Failed" <<endl;
-    }else{
-      wait(NULL);
-    }
+    t.join();
+
   }
 }
 
