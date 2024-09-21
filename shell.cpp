@@ -1,6 +1,5 @@
 #include "shell.h"
 #include "file.h"
-#include <thread>
 
 FileSystem fs("/");
 
