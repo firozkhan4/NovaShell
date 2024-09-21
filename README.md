@@ -69,13 +69,12 @@ Follow this checklist step-by-step to build your own shell and gradually add adv
 - [ ] Tokenize the input string.
 - [ ] Store tokens in an array (e.g., `argv[]`).
 
-### 4. Fork a Process to Execute Commands
-- [ ] Use `fork()` to create a new process.
-- [ ] Use `execvp()` for command execution.
+### 4. Create a Thread to Execute Commands
+- [ ] Use `Thread` to create a new process.
 - [ ] Handle execution errors.
 
-### 5. Wait for the Child Process
-- [ ] Use `wait()` or `waitpid()` to wait for the child.
+### 5. Wait for the Thread Process
+- [ ] Use `join()` to join for the child.
 
 ### 6. Handle Built-In Commands
 - [ ] Implement `cd`, `exit`, and other essential commands.
